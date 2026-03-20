@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>IssueAI — Project Intelligence</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/css/app.css"/>
+</head>
+<body>
+
+<!-- ── TOAST ── -->
+<div id="toast" class="toast"></div>
+
+<!-- ── MODAL ── -->
+<div id="modal-overlay" class="modal-overlay hidden">
+  <div id="modal" class="modal"></div>
+</div>
+
+<!-- ── SIDEBAR ── -->
+<div class="sidebar">
+  <div class="logo">
+    <div class="logo-icon">⚡</div>
+    <div>
+      <div>IssueAI</div>
+      <span>Project Intelligence</span>
+    </div>
+  </div>
+  <nav class="nav">
+    <div class="nav-item" data-tab="dashboard"><span class="nav-icon">⊞</span>Dashboard</div>
+    <div class="nav-item active" data-tab="issues"><span class="nav-icon">◈</span>Issues<span class="nav-badge" id="nav-badge-issues">—</span></div>
+    <div class="nav-item" data-tab="ingest"><span class="nav-icon">↓</span>Ingest Data</div>
+    <div class="nav-item" data-tab="analysis"><span class="nav-icon">✦</span>AI Analysis</div>
+    <div class="nav-item" data-tab="patterns"><span class="nav-icon">◉</span>Patterns</div>
+    <div class="nav-item" data-tab="document"><span class="nav-icon">≡</span>Documents<span class="nav-badge green">1</span></div>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="avatar" id="user-avatar">RK</div>
+    <div>
+      <div class="user-name" id="user-name">Ravi Kumar</div>
+      <div class="user-role">Engineering Lead</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="page-title">Issues</div>
+    <div class="topbar-actions">
+      <div class="search-wrap">
+        <input class="search-bar" id="global-search" placeholder="Search issues, projects…"/>
+      </div>
+      <button class="btn btn-secondary" data-go="ingest">↓ Ingest</button>
+      <button class="btn btn-primary" id="btn-add-issue">+ Add Issue</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="tab-panels">
+
+      <!-- ══════════════════ DASHBOARD ══════════════════ -->
+      <div id="tab-dashboard">
+        <!-- KPI row -->
+        <div class="kpi-grid" id="kpi-grid">
+          <div class="kpi-card red"><div class="kpi-label">Critical Issues</div><div class="kpi-value red" id="kpi-critical">—</div><div class="kpi-sub" id="kpi-critical-sub"> </div><div class="kpi-bg-num" id="kpi-critical-bg">—</div></div>
+          <div class="kpi-card orange"><div class="kpi-label">Open Issues</div><div class="kpi-value orange" id="kpi-open">—</div><div class="kpi-sub" id="kpi-open-sub"> </div><div class="kpi-bg-num" id="kpi-open-bg">—</div></div>
+          <div class="kpi-card green"><div class="kpi-label">Team Health</div><div class="kpi-value green" id="kpi-health">—</div><div class="kpi-sub"><b>/ 10</b> AI score</div><div class="kpi-bg-num" id="kpi-health-bg">—</div></div>
+          <div class="kpi-card accent"><div class="kpi-label">Resolved</div><div class="kpi-value accent" id="kpi-resolved">—</div><div class="kpi-sub" id="kpi-resolved-sub"> </div><div class="kpi-bg-num" id="kpi-resolved-bg">—</div></div>
+        </div>
+
+        <!-- AI status bar -->
+        <div class="ai-status-bar hidden" id="ai-status">
+          <div class="pulse"></div>
+          <span class="ai-status-text" id="ai-status-text">Processing…</span>
+          <div class="prog-bar"><div class="prog-fill" id="prog-fill"></div></div>
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--text2)" id="ai-counter"></span>
+        </div>
+
+        <!-- Charts row -->
+        <div class="charts-row">
+          <div class="chart-card">
+            <div class="chart-title">By Category <span style="color:var(--text3);font-weight:400;font-size:10px">AI Classified</span></div>
+            <div class="bar-chart" id="cat-chart"></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Severity Split</div>
+            <div class="donut-wrap">
+              <svg class="donut" id="donut-svg" viewBox="0 0 110 110"></svg>
+              <div class="donut-legend" id="donut-legend"></div>
+            </div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Issues by Project</div>
+            <div class="bar-chart" id="proj-chart"></div>
+            <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border)">
+              <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Quick actions</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button class="btn btn-secondary" style="font-size:11px;padding:5px 12px" id="btn-classify">🤖 Classify all</button>
+                <button class="btn btn-primary"   style="font-size:11px;padding:5px 12px" data-go="analysis">✦ Run Analysis</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════ ISSUES ══════════════════ -->
+      <div id="tab-issues" class="active">
+        <div class="table-card">
+          <div class="table-header">
+            <div class="table-title">All Issues</div>
+            <div class="filter-pills" id="filter-pills">
+              <div class="pill active" data-filter="all">All</div>
+              <div class="pill" data-filter="open">Open</div>
+              <div class="pill" data-filter="critical">Critical</div>
+              <div class="pill" data-filter="resolved">Resolved</div>
+            </div>
+            <!-- project filter pills injected by JS -->
+            <div class="filter-pills" id="proj-pills" style="margin-left:8px"></div>
+            <div style="margin-left:auto;display:flex;gap:8px">
+              <button class="btn btn-secondary" style="font-size:11px;padding:5px 10px" id="btn-export">⬇ Export CSV</button>
+              <button class="btn btn-primary"   style="font-size:11px;padding:5px 10px" id="btn-add-issue2">+ Add</button>
+            </div>
+          </div>
+          <div style="overflow-x:auto">
+            <table>
+              <thead>
+                <tr>
+                  <th style="width:36px">#</th>
+                  <th>Issue Title</th>
+                  <th>Project</th>
+                  <th>Reporter</th>
+                  <th>Severity</th>
+                  <th>Category</th>
+                  <th>Root Cause (AI)</th>
+                  <th>Status</th>
+                  <th style="width:60px"></th>
+                </tr>
+              </thead>
+              <tbody id="issues-tbody">
+                <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--text3)">Loading…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════ INGEST ══════════════════ -->
+      <div id="tab-ingest">
+        <div class="ingest-grid">
+          <div class="ingest-card">
+            <div class="ingest-icon">💬</div>
+            <div class="ingest-title">MS Teams Channel</div>
+            <div class="ingest-desc">Pull messages from a Teams channel via Microsoft Graph API. In production, configure your TEAMS_TENANT_ID in .env — uses mock data automatically when not set.</div>
+            <div class="ingest-meta">Status: mock mode active<br/>Set TEAMS_* env vars to enable live sync</div>
+            <button class="btn btn-primary" id="btn-teams-ingest">↓ Ingest Mock Data</button>
+          </div>
+          <div class="ingest-card">
+            <div class="ingest-icon">📊</div>
+            <div class="ingest-title">CSV / Spreadsheet</div>
+            <div class="ingest-desc">Upload any CSV with columns: title, description, reporter, project, severity, status. Extra columns are safely ignored.</div>
+            <div class="ingest-meta">Accepted: .csv · Max 10 MB<br/>Download template to get started</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <label class="btn btn-primary" style="cursor:pointer">📂 Upload CSV<input type="file" id="csv-upload" accept=".csv" style="display:none"/></label>
+              <a class="btn btn-secondary" href="/api/issues/export-csv" download>⬇ Template</a>
+            </div>
+          </div>
+          <div class="ingest-card">
+            <div class="ingest-icon">⌨️</div>
+            <div class="ingest-title">Manual Entry</div>
+            <div class="ingest-desc">Quickly log a single issue — useful for standup blockers or ad-hoc reports not formally tracked yet.</div>
+            <div class="ingest-meta">Immediate · No setup required<br/>Source tagged as "manual"</div>
+            <button class="btn btn-secondary" id="btn-open-form">+ Open Form</button>
+          </div>
+        </div>
+
+        <!-- Manual form -->
+        <div class="manual-form" id="manual-form-section">
+          <div style="font-family:var(--font-display);font-size:15px;font-weight:700;margin-bottom:16px">Log a New Issue</div>
+          <form id="issue-form">
+            <div class="form-grid">
+              <div class="form-group form-full">
+                <label for="f-title">Issue Title *</label>
+                <input id="f-title" name="title" placeholder="e.g. Prod deployment rollback failed after hotfix" required/>
+              </div>
+              <div class="form-group form-full">
+                <label for="f-desc">Description</label>
+                <textarea id="f-desc" name="description" placeholder="Steps to reproduce, business impact, links to logs…"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="f-reporter">Reporter</label>
+                <input id="f-reporter" name="reporter" placeholder="Your name"/>
+              </div>
+              <div class="form-group">
+                <label for="f-project">Project</label>
+                <select id="f-project" name="project">
+                  <option>Phoenix</option><option>Atlas</option><option>Horizon</option><option>General</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="f-severity">Severity</label>
+                <select id="f-severity" name="severity">
+                  <option value="low">Low</option>
+                  <option value="medium" selected>Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="f-category">Category</label>
+                <select id="f-category" name="category">
+                  <option value="">— select —</option>
+                  <option>technical</option><option>process</option><option>security</option>
+                  <option>quality</option><option>environment</option><option>other</option>
+                </select>
+              </div>
+              <div class="form-group form-full">
+                <label for="f-root">Root Cause (optional)</label>
+                <input id="f-root" name="root_cause" placeholder="Your hypothesis on why this happened"/>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:16px;align-items:center">
+              <button type="submit" class="btn btn-primary">Save Issue</button>
+              <button type="button" class="btn btn-secondary" id="btn-form-reset">Clear</button>
+              <span id="form-status" style="font-size:12px;color:var(--text3)"></span>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- ══════════════════ ANALYSIS ══════════════════ -->
+      <div id="tab-analysis">
+        <div class="analysis-top">
+          <div class="analysis-summary">
+            <h2 id="analysis-title">AI Analysis</h2>
+            <p id="analysis-summary-text" style="color:var(--text2)">Click <strong>Run Analysis</strong> to generate insights from your current issue data. The analysis looks at severity distribution, recurring categories, and team health score.</p>
+            <div style="display:flex;gap:24px;margin-top:16px;flex-wrap:wrap" id="analysis-metrics"></div>
+            <div style="display:flex;gap:8px;margin-top:16px">
+              <button class="btn btn-primary" id="btn-run-analysis">✦ Run Analysis</button>
+              <button class="btn btn-secondary" data-go="document">📄 Generate Report</button>
+            </div>
+          </div>
+          <div class="health-ring">
+            <div class="health-score" id="health-score">—</div>
+            <div class="health-label">Team Health</div>
+          </div>
+        </div>
+
+        <div class="analysis-grid" id="analysis-grid" style="display:none">
+          <div class="analysis-card">
+            <h3>Issues by Category</h3>
+            <div id="analysis-cats"></div>
+          </div>
+          <div class="analysis-card">
+            <h3>Open Issues by Project</h3>
+            <div id="analysis-projs"></div>
+          </div>
+        </div>
+
+        <div class="analysis-card" id="analysis-reco-card" style="display:none">
+          <h3>Recommendations</h3>
+          <div class="reco-grid" id="reco-grid"></div>
+        </div>
+      </div>
+
+      <!-- ══════════════════ PATTERNS ══════════════════ -->
+      <div id="tab-patterns">
+        <div style="display:flex;gap:6px;margin-bottom:18px;border-bottom:1px solid var(--border);padding-bottom:14px">
+          <button class="pill active" data-psub="velocity">Velocity Trend</button>
+          <button class="pill" data-psub="composition">Issue Composition</button>
+          <button class="pill" data-psub="table">Sprint Table</button>
+          <div style="margin-left:auto">
+            <select id="pattern-project-select" style="background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:5px 10px;color:var(--text);font-size:12px;outline:none">
+              <option value="Phoenix">Phoenix</option>
+              <option value="Atlas">Atlas</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Velocity sub-panel -->
+        <div id="psub-velocity" class="psub active">
+          <div class="chart-card" style="margin-bottom:14px">
+            <div class="chart-title">Velocity Score — Sprint over Sprint</div>
+            <div id="velocity-chart-wrap" style="position:relative;height:140px"></div>
+            <div style="display:flex;gap:16px;margin-top:8px;font-size:10px;color:var(--text3)">
+              <span>● Green ≥ 7 (healthy)</span><span>● Yellow 4–6 (watch)</span><span>● Red &lt; 4 (at risk)</span>
+            </div>
+          </div>
+          <div class="kpi-grid" id="pattern-kpis"></div>
+        </div>
+
+        <!-- Composition sub-panel -->
+        <div id="psub-composition" class="psub hidden">
+          <div class="chart-card">
+            <div class="chart-title">Issue Composition — Critical + High per Sprint</div>
+            <div id="composition-chart-wrap" style="position:relative;height:160px"></div>
+          </div>
+        </div>
+
+        <!-- Sprint Table sub-panel -->
+        <div id="psub-table" class="psub hidden">
+          <div class="table-card">
+            <div style="overflow-x:auto">
+              <table>
+                <thead>
+                  <tr><th>Sprint</th><th>Total</th><th>Critical</th><th>High</th><th>Medium</th><th>Low</th><th>Resolved</th><th>Top Category</th><th>Velocity</th></tr>
+                </thead>
+                <tbody id="sprint-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════════════════ DOCUMENT ══════════════════ -->
+      <div id="tab-document">
+        <div class="doc-toolbar">
+          <span style="font-family:var(--font-display);font-weight:700" id="doc-filename">issueai-report.md</span>
+          <span style="font-family:var(--font-mono);font-size:11px;color:var(--text3)" id="doc-meta">Generated from live data</span>
+          <div style="margin-left:auto;display:flex;gap:8px">
+            <button class="btn btn-secondary" style="font-size:11px" id="btn-copy-report">📋 Copy</button>
+            <a class="btn btn-primary" style="font-size:11px;text-decoration:none" id="btn-download-report" href="/api/report" download>⬇ Download .md</a>
+          </div>
+        </div>
+        <div class="doc-body" id="doc-body">
+          <div style="color:var(--text3);text-align:center;padding:40px">
+            Click <strong style="color:var(--text)">⬇ Download .md</strong> to generate and download the live report,<br/>
+            or click <strong style="color:var(--text)">📋 Copy</strong> to copy the Markdown to your clipboard.
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /tab-panels -->
+  </div>
+</div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>
